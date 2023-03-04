@@ -153,6 +153,7 @@ const std::string kCmdNameZRemrangebylex = "zremrangebylex";
 const std::string kCmdNameZRemrangebyscore = "zremrangebyscore";
 const std::string kCmdNameZPopmax = "zpopmax";
 const std::string kCmdNameZPopmin = "zpopmin";
+const std::string kCmaNameZMPop = "zmpop";
 
 //Set
 const std::string kCmdNameSAdd = "sadd";

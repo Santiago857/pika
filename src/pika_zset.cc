@@ -461,6 +461,8 @@ void ZRemCmd::Do(std::shared_ptr<Partition> partition) {
   return;
 }
 
+// ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight
+//  [weight ...]] [AGGREGATE <SUM | MIN | MAX>]
 void ZsetUIstoreParentCmd::DoInitial() {
   dest_key_ = argv_[1];
   if (!slash::string2l(argv_[2].data(), argv_[2].size(), &num_keys_)) {
@@ -943,4 +945,66 @@ void ZPopminCmd::Do(std::shared_ptr<Partition> partition) {
   } else {
     res_.SetRes(CmdRes::kErrOther, s.ToString());
   }
+}
+
+// ZMPOP          numkeys key [key ...] <MIN | MAX> [COUNT count]
+// BZMPOP timeout numkeys key [key ...] <MIN | MAX> [COUNT count]
+void ZMPopParentCmd::DoInitial(int startPos) {
+    // get numkeys
+    if (!slash::string2l(argv_[startPos].data(), argv_[startPos].size(), reinterpret_cast<long *>(&num_keys_))) {
+        res_.SetRes(CmdRes::kInvalidInt);
+        return;
+    }
+    if (num_keys_ < 1) {
+        res_.SetRes(CmdRes::kErrOther, "at least 1 input key is needed for ZMPOP");
+        return;
+    }
+
+    // keys : key [key ...]
+    int argc = argv_.size();
+    if (argc < num_keys_ + 2) {
+        res_.SetRes(CmdRes::kSyntaxErr);
+        return;
+    }
+    keys_.assign(argv_.begin() + 2, argv_.begin() + 2 + num_keys_);
+
+    // get <MIN | MAX>
+    if (argc < num_keys_ + 2 + 1) {
+        res_.SetRes(CmdRes::kSyntaxErr);
+        return;
+    }
+    int modifierPos = num_keys_ + 2;
+    if (!strcasecmp(argv_[modifierPos].data(), "min")) {
+        this->modifier_ = blackwidow::MIN;
+    } else if (!strcasecmp(argv_[modifierPos].data(), "max")) {
+        this->modifier_ = blackwidow::MAX;
+    } else {
+        res_.SetRes(CmdRes::kSyntaxErr);
+        return;
+    }
+
+    // get [COUNT count]
+    if (argc == num_keys_ + 2 + 1) {
+        // count is default
+        count_ = 1;
+        return;
+    }
+    int countPos = num_keys_ + 2 + 1 + 1;
+    if (!slash::string2ll(argv_[countPos].data(), argv_[countPos].size(), (long long*)(&count_))) {
+        res_.SetRes(CmdRes::kInvalidInt);
+        return;
+    }
+}
+
+void ZMPopCmd::DoInitial() {
+    if (!CheckArg(argv_.size())) {
+        res_.SetRes(CmdRes::kWrongNum, kCmaNameZMPop);
+        return;
+    }
+
+    ZMPopParentCmd::DoInitial(0);
+}
+
+void ZMPopCmd::Do(std::shared_ptr<Partition> partition) {
+    
 }

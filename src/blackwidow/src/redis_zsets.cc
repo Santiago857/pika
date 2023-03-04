@@ -235,6 +235,17 @@ Status RedisZSets::PKPatternMatchDel(const std::string& pattern,
   return s;
 }
 
+Status ZMPop(const std::vector<std::string>& keys,
+     const AGGREGATE agg, const int64_t count,
+     std::vector<ScoreMember>* score_members) {
+  if (keys.size() <= 0) {
+    return Status::Corruption("ZMPop invalid parameter, no keys");
+  }
+  uint32_t statistic = 0;
+  rocksdb::WriteBatch batch;
+  
+}
+
 Status RedisZSets::ZPopMax(const Slice& key, 
                            const int64_t count,
                            std::vector<ScoreMember>* score_members) {

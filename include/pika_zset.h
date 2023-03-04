@@ -559,4 +559,63 @@ class ZPopminCmd : public Cmd {
   int64_t count_;
 };
 
+class ZMPopParentCmd : public Cmd {
+public:
+    ZMPopParentCmd(const std::string& name, int arity, uint16_t flag)
+            : Cmd(name, arity, flag), modifier_(blackwidow::SUM) {}
+protected:
+    int64_t num_keys_;
+    std::vector<std::string> keys_;
+    std::vector<double> weights_;
+    blackwidow::AGGREGATE modifier_;
+    int64_t count_;
+    virtual void DoInitial() override;
+    virtual void Clear() {
+        modifier_ = blackwidow::SUM;
+    }
+    void DoInitial(int startPos);
+};
+
+class ZMPopCmd : public ZMPopParentCmd {
+public:
+    ZMPopCmd(const std::string& name, int arity, uint16_t flag)
+            : ZMPopParentCmd(name, arity, flag) {}
+    virtual std::vector<std::string> current_key() const {
+        std::vector<std::string> res;
+        res.push_back(key_);
+        return res;
+    }
+    virtual void Do(std::shared_ptr<Partition> partition = nullptr);
+    virtual void Split(std::shared_ptr<Partition> partition, const HintKeys& hint_keys) {};
+    virtual void Merge() {};
+    virtual Cmd* Clone() override {
+        return new ZMPopCmd(*this);
+    }
+private:
+    virtual void DoInitial() override;
+    std::string key_;
+    int64_t count_;
+};
+
+class BZMPopCmd : public Cmd {
+public:
+    BZMPopCmd(const std::string& name, int arity, uint16_t flag)
+            : Cmd(name, arity, flag) {}
+    virtual std::vector<std::string> current_key() const {
+        std::vector<std::string> res;
+        res.push_back(key_);
+        return res;
+    }
+    virtual void Do(std::shared_ptr<Partition> partition = nullptr);
+    virtual void Split(std::shared_ptr<Partition> partition, const HintKeys& hint_keys) {};
+    virtual void Merge() {};
+    virtual Cmd* Clone() override {
+        return new BZMPopCmd(*this);
+    }
+private:
+    virtual void DoInitial() override;
+    std::string key_;
+    int64_t count_;
+};
+
 #endif
